@@ -127,8 +127,8 @@ func (timer DailyRangeIntervalTimer) RunTask() {
 		for ; startTime.Before(now); {
 			startTime = startTime.Add(ONE_DAY)
 		}
-		timer.initStartTr(startTime.Sub(now))
 	}
+	timer.initStartTr(startTime.Sub(now))
 
 	timer.startTimeChan = make(chan time.Time, 0)
 	timer.endTimeChan = make(chan time.Time, 0)
