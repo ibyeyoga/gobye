@@ -119,12 +119,13 @@ func (timer DailyRangeIntervalTimer) RunTask() {
 	startTime := GetTimeByString(timer.Start)
 	endTime := GetTimeByString(timer.End)
 	now := time.Now()
+
 	if startTime.Before(now) && endTime.After(now) {
 		//时间范围内
 		timer.initEndTr(endTime.Sub(now))
 	} else {
 		for ; startTime.Before(now); {
-			startTime.Add(ONE_DAY)
+			startTime = startTime.Add(ONE_DAY)
 		}
 		timer.initStartTr(startTime.Sub(now))
 	}
@@ -213,7 +214,6 @@ func (timer *DailyRangeIntervalTimer) initEndTr(endDuration time.Duration) {
 		timer.endTr = time.NewTimer(endDuration)
 	}
 	go func() {
-		v := <-timer.endTr.C
-		timer.endTimeChan <- v
+		timer.endTimeChan <- <-timer.endTr.C
 	}()
 }
