@@ -137,14 +137,11 @@ func (timer DailyRangeIntervalTimer) RunTask() {
 			select {
 			case n := <-timer.startTimeChan:
 				//处理开始逻辑
-				log.Println("设置结束定时器：" + n.String())
 				endTime := GetTimeByString(timer.End)
-				log.Println("设置结束时间：" + endTime.String())
 				for ; endTime.Before(n); {
 					endTime = endTime.Add(ONE_DAY)
 				}
 
-				log.Println("设置ticker：" + n.String())
 				timer.startTicker()
 				timer.initEndTr(endTime.Sub(n))
 			case n := <-timer.endTimeChan:
@@ -154,7 +151,7 @@ func (timer DailyRangeIntervalTimer) RunTask() {
 					timer.intervalTk.Stop()
 				}
 
-				log.Println("已结束：" + n.String())
+				log.Println("已结束循环执行任务，时间:" + n.String())
 
 				//设置开始定时器
 				startTime := GetTimeByString(timer.Start)
@@ -173,12 +170,11 @@ func (timer DailyRangeIntervalTimer) RunTask() {
 */
 func (timer *DailyRangeIntervalTimer) initStartTr(startDuration time.Duration) {
 	if timer.startTr != nil {
-		log.Println("下次启动时间2：" + timer.Start)
 		timer.startTr.Reset(startDuration)
 	} else {
-		log.Println("下次启动时间：" + timer.Start)
 		timer.startTr = time.NewTimer(startDuration)
 	}
+	log.Println("下次启动时间：" + GetTimeByString(timer.Start).Add(ONE_DAY).String())
 
 	go func() {
 		timer.startTimeChan <- <-timer.startTr.C
