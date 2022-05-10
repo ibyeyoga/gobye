@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-const ONE_DAY  = 24 * time.Hour
+const ONE_DAY = 24 * time.Hour
 
 //每日定时任务定时器
 type DailyTimer struct {
@@ -20,16 +20,18 @@ type DailyTimer struct {
 
 //每日时间范围间隔定时器
 type DailyRangeIntervalTimer struct {
-	Name          string
-	Interval      time.Duration
-	Start         string
-	End           string
-	startTr       *time.Timer
-	endTr         *time.Timer
-	intervalTk    *time.Ticker
-	startTimeChan chan time.Time
-	endTimeChan   chan time.Time
-	Fn            func()
+	Name             string
+	Interval         time.Duration
+	Start            string
+	End              string
+	startTr          *time.Timer
+	endTr            *time.Timer
+	intervalTk       *time.Ticker
+	startTimeChan    chan time.Time
+	endTimeChan      chan time.Time
+	Fn               func(timer *DailyRangeIntervalTimer)
+	FnExecLimit      int
+	fnTodayExecCount int
 }
 
 func GetHour(hour int) time.Duration {
@@ -175,7 +177,7 @@ func (timer *DailyRangeIntervalTimer) initStartTr(startDuration time.Duration) {
 		timer.startTr = time.NewTimer(startDuration)
 	}
 	log.Println("下次启动时间：" + GetTimeByString(timer.Start).Add(ONE_DAY).String())
-
+	timer.fnTodayExecCount = 0
 	go func() {
 		timer.startTimeChan <- <-timer.startTr.C
 	}()
@@ -194,7 +196,10 @@ func (timer *DailyRangeIntervalTimer) startTicker() *time.Ticker {
 		for {
 			execTime := <-timer.intervalTk.C
 			fmt.Println("exec task at " + execTime.String())
-			timer.Fn()
+			if timer.FnExecLimit == 0 || timer.fnTodayExecCount < timer.FnExecLimit {
+				//timer.fnTodayExecCount++
+				timer.Fn(timer)
+			}
 		}
 	}()
 	return timer.intervalTk
@@ -209,7 +214,12 @@ func (timer *DailyRangeIntervalTimer) initEndTr(endDuration time.Duration) {
 	} else {
 		timer.endTr = time.NewTimer(endDuration)
 	}
+	timer.fnTodayExecCount = 0;
 	go func() {
 		timer.endTimeChan <- <-timer.endTr.C
 	}()
+}
+
+func (timer *DailyRangeIntervalTimer) AddExecCount() {
+	timer.fnTodayExecCount++
 }
